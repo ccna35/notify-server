@@ -61,35 +61,35 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     res
       .status(404)
       .send({ message: "This user doesn't exist, please sign up!" });
-  }
-
-  const passwordsMatch = await bcrypt.compare(password, user!.password);
-
-  if (passwordsMatch) {
-    try {
-      const userId = user?._id;
-      let token = jwt.sign({ userId }, SECRET_KEY as string, {
-        expiresIn: "1h",
-      });
-
-      res.status(201).json({
-        success: true,
-        data: {
-          userData: {
-            id: user?._id,
-            email: user?.email,
-            firstName: user?.firstName,
-            lastName: user?.lastName,
-          },
-          token,
-        },
-      });
-    } catch {
-      const error = new Error("Error! Something went wrong.");
-      return next(error);
-    }
   } else {
-    res.status(400).send({ message: "Password is incorrect" });
+    const passwordsMatch = await bcrypt.compare(password, user!.password);
+
+    if (passwordsMatch) {
+      try {
+        const userId = user?._id;
+        let token = jwt.sign({ userId }, SECRET_KEY as string, {
+          expiresIn: "1h",
+        });
+
+        res.status(201).json({
+          success: true,
+          data: {
+            userData: {
+              id: user?._id,
+              email: user?.email,
+              firstName: user?.firstName,
+              lastName: user?.lastName,
+            },
+            token,
+          },
+        });
+      } catch {
+        const error = new Error("Error! Something went wrong.");
+        return next(error);
+      }
+    } else {
+      res.status(400).send({ message: "Password is incorrect" });
+    }
   }
 };
 
