@@ -6,7 +6,7 @@ import noteRoutes from "./routes/noteRoutes";
 import mongoose from "mongoose";
 import cors from "cors";
 
-dotenv.config();
+dotenv.config({ path: ".env" });
 
 const PORT = process.env.PORT || 8080;
 
