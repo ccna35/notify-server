@@ -12,43 +12,49 @@ const SECRET_KEY: Secret | undefined = process.env.MY_SECRET;
 const signUp = async (req: Request, res: Response, next: NextFunction) => {
   const { firstName, lastName, email, password, secondPassword } = req.body;
 
-  if (password === secondPassword) {
-    const hashedPassword: string = await bcrypt.hash(password, 10);
+  const user = await User.findOne({ email });
 
-    const newUser = new User({
-      firstName,
-      lastName,
-      email,
-      password: hashedPassword,
-    });
-
-    console.log(newUser);
-
-    try {
-      await newUser.save();
-      const userId = newUser._id;
-      let token = jwt.sign({ userId }, SECRET_KEY as string, {
-        expiresIn: "1h",
-      });
-
-      res.status(201).json({
-        success: true,
-        data: {
-          userData: {
-            id: newUser?._id,
-            email: newUser?.email,
-            firstName: newUser?.firstName,
-            lastName: newUser?.lastName,
-          },
-          token,
-        },
-      });
-    } catch {
-      const error = new Error("Error! Something went wrong.");
-      return next(error);
-    }
+  if (user) {
+    res.status(409).send({ message: "This user already exist!" });
   } else {
-    res.status(400).json({ message: "Passwords don't match" });
+    if (password === secondPassword) {
+      const hashedPassword: string = await bcrypt.hash(password, 10);
+
+      const newUser = new User({
+        firstName,
+        lastName,
+        email,
+        password: hashedPassword,
+      });
+
+      console.log(newUser);
+
+      try {
+        await newUser.save();
+        const userId = newUser._id;
+        let token = jwt.sign({ userId }, SECRET_KEY as string, {
+          expiresIn: "1h",
+        });
+
+        res.status(201).json({
+          success: true,
+          data: {
+            userData: {
+              id: newUser?._id,
+              email: newUser?.email,
+              firstName: newUser?.firstName,
+              lastName: newUser?.lastName,
+            },
+            token,
+          },
+        });
+      } catch {
+        const error = new Error("Error! Something went wrong.");
+        return next(error);
+      }
+    } else {
+      res.status(400).json({ message: "Passwords don't match" });
+    }
   }
 };
 
