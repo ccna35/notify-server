@@ -23,11 +23,11 @@ app.use(express.json());
 app.use("/users", userRoutes);
 app.use("/notes", noteRoutes);
 
-const DB_URI: string | undefined = process.env.DB_URI;
+const DB_URI = process.env.DB_URI as string;
 
 mongoose.set("strictQuery", false); // this line suppresses the deprecation warning.
 mongoose
-  .connect(DB_URI!)
+  .connect(DB_URI)
   .then(() => {
     console.log("Database connected");
     app.listen(PORT, () => {
