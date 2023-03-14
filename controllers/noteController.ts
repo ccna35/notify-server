@@ -2,11 +2,12 @@ import { Request, Response } from "express";
 import Note from "../models/noteModel";
 
 const createNote = async (req: Request, res: Response) => {
-  const { title, text, userId } = req.body;
+  const { title, text, userId, pinned } = req.body;
   const note = new Note({
     title,
     text,
     user: userId,
+    pinned,
   });
 
   try {
