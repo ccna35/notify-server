@@ -46,4 +46,20 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
-export {};
+const protect = async (req: Request, res: Response, next: NextFunction) => {
+  // Get token value to the json body
+  const token: string = req.headers.authorization?.split(" ")[1] as string;
+
+  try {
+    // Verify the token is valid
+    jwt.verify(token, SECRET_KEY as string);
+
+    next();
+  } catch (error) {
+    return res
+      .status(401)
+      .json({ error: "Protect middleware: Not Authorized" });
+  }
+};
+
+export { protect };

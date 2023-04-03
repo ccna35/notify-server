@@ -27,8 +27,6 @@ const signUp = async (req: Request, res: Response, next: NextFunction) => {
         password: hashedPassword,
       });
 
-      console.log(newUser);
-
       try {
         await newUser.save();
         const userId = newUser._id;
@@ -73,8 +71,18 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     if (passwordsMatch) {
       try {
         const userId = user?._id;
-        let token = jwt.sign({ userId }, SECRET_KEY as string, {
-          expiresIn: "1h",
+        let accessToken = jwt.sign({ userId }, SECRET_KEY as string, {
+          expiresIn: "15m",
+        });
+        let refreshToken = jwt.sign({ userId }, SECRET_KEY as string, {
+          expiresIn: "1d",
+        });
+
+        res.cookie("jwt", refreshToken, {
+          httpOnly: true,
+          sameSite: "none",
+          secure: true,
+          maxAge: 24 * 60 * 60 * 1000,
         });
 
         res.status(201).json({
@@ -86,7 +94,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
               firstName: user?.firstName,
               lastName: user?.lastName,
             },
-            token,
+            accessToken,
           },
         });
       } catch {
