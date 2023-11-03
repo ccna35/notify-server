@@ -1,70 +1,69 @@
-import express, { Express, Request, Response } from "express";
-import dotenv from "dotenv";
-import { Note } from "./types";
-import userRoutes from "./routes/userRoutes";
-import noteRoutes from "./routes/noteRoutes";
-import mongoose from "mongoose";
+import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import credentials from "./middlewares/credentials";
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+import morgan from "morgan";
+import users from "./routes/users";
+import notes from "./routes/notes";
+import categories from "./routes/categories";
 
-dotenv.config({ path: ".env" });
+import dotenv from "dotenv";
+dotenv.config();
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 
-const app: Express = express();
-
-app.use(credentials);
+const app = express();
 
 app.use(
   cors({
     origin: ["http://127.0.0.1:5173", "https://notify-client-neon.vercel.app"],
-    methods: ["GET", "POST", "DELETE", "PUT"],
   })
 );
+
+// Middlewares
+app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/users", userRoutes);
-app.use("/notes", noteRoutes);
+// Routes
+app.use("/users", users);
+app.use("/notes", notes);
+app.use("/categories", categories);
 
-app.post("/create-checkout-session", async (req: Request, res: Response) => {
-  const { product } = req.body;
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: "Notify Monthly Subscription",
-          },
-          unit_amount: 9 * 100,
-        },
-        quantity: 1,
-      },
-    ],
-    mode: "payment",
-    success_url:
-      process.env.CLIENT_URL + "home" ||
-      "https://notify-client-neon.vercel.app/home",
-    cancel_url:
-      process.env.CLIENT_URL + "premium" ||
-      "https://notify-client-neon.vercel.app/premium",
-  });
-  res.json({ url: session.url });
+app.get("/logout", (req, res) => {
+  console.log("Logout router");
+
+  res.clearCookie("jwt");
+  res.status(200).send("User logged out successfully");
 });
 
-const DB_URI = process.env.DB_URI as string;
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
-mongoose.set("strictQuery", false); // this line suppresses the deprecation warning.
-mongoose
-  .connect(DB_URI)
-  .then(() => {
-    console.log("Database connected");
-    app.listen(PORT, () => {
-      console.log(`Server is running at ${PORT}`);
-    });
-  })
-  .catch((err) => console.log(err.message));
+// app.post("/create-checkout-session", async (req: Request, res: Response) => {
+//   const { product } = req.body;
+//   const session = await stripe.checkout.sessions.create({
+//     payment_method_types: ["card"],
+//     line_items: [
+//       {
+//         price_data: {
+//           currency: "usd",
+//           product_data: {
+//             name: "Notify Monthly Subscription",
+//           },
+//           unit_amount: 9 * 100,
+//         },
+//         quantity: 1,
+//       },
+//     ],
+//     mode: "payment",
+//     success_url:
+//       process.env.CLIENT_URL + "home" ||
+//       "https://notify-client-neon.vercel.app/home",
+//     cancel_url:
+//       process.env.CLIENT_URL + "premium" ||
+//       "https://notify-client-neon.vercel.app/premium",
+//   });
+//   res.json({ url: session.url });
+// });
