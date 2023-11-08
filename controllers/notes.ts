@@ -75,8 +75,6 @@ const getAllNotesByUser = (req: UserRequest, res: Response) => {
 
   const searchQuery = req.query.search;
 
-  const searchData = [user, searchQuery, searchQuery];
-
   const query = `SELECT n.id, n.user_id, n.note_title, n.note_body, n.isPinned, c.category_name, n.createdAt FROM notes AS n JOIN categories AS c ON n.category = c.id WHERE n.user_id = ${user} AND (n.note_title LIKE '%${searchQuery}%' OR n.note_body LIKE '%${searchQuery}%') ORDER BY n.createdAt DESC`;
 
   connection.query(query, (err, results) => {
