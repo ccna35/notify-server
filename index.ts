@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
+import bodyParser from "body-parser";
+
+// routes
 import users from "./routes/users";
 import notes from "./routes/notes";
 import categories from "./routes/categories";
@@ -13,16 +16,19 @@ const PORT = process.env.PORT || 3000;
 
 const app = express();
 
-app.use(
-  cors({
-    origin: ["http://127.0.0.1:5173", "https://notify-client-neon.vercel.app"],
-  })
-);
-
 // Middlewares
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://notify-client-neon.vercel.app"],
+    credentials: true,
+  })
+);
 
 // Routes
 app.use("/users", users);

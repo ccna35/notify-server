@@ -47,16 +47,38 @@ const signup = async (req: Request, res: Response) => {
             } else {
               console.log("insertId: ", insertResult.insertId);
 
-              const token = await generateToken(insertResult.insertId);
+              // Add an uncategorized category every time a new user signs up
+              const category_details = [
+                [insertResult.insertId, "Uncategorized"],
+              ];
+              const uncategorizedQuery =
+                "INSERT INTO categories(user_id, category_name) VALUES ?";
 
-              res.cookie("jwt", token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV !== "development", // Use secure cookies in production
-                sameSite: "none", // Prevent CSRF attacks
-                maxAge: 7 * 24 * 60 * 60 * 1000,
-              });
+              connection.query(
+                uncategorizedQuery,
+                [category_details],
+                async (err, results) => {
+                  if (err) {
+                    console.log(err);
+                    res.status(500).send("Internal Server Error");
+                  } else {
+                    console.log("results", results);
+                    const token = await generateToken(insertResult.insertId);
 
-              res.status(200).send("User signed up successfully");
+                    res.cookie("jwt", token, {
+                      httpOnly: true,
+                      secure: true,
+                      sameSite: "none",
+                      maxAge: 7 * 24 * 60 * 60 * 1000,
+                    });
+                    res
+                      .status(200)
+                      .json({ message: "User signed up successfully" });
+                  }
+                }
+              );
+
+              // res.status(200).send("User signed up successfully");
             }
           }
         );
@@ -87,12 +109,15 @@ const login = (req: Request, res: Response) => {
 
           res.cookie("jwt", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV !== "development", // Use secure cookies in production
+            secure: true,
             sameSite: "none",
             maxAge: 7 * 24 * 60 * 60 * 1000,
           });
 
-          res.status(200).send("Login Successful");
+          res.status(200).send({
+            message: "Login Successful",
+            user: { ...user, user_password: null },
+          });
         } else {
           res.status(401).send("Invalid credentials");
         }

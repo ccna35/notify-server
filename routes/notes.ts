@@ -3,6 +3,8 @@ import {
   createNote,
   deleteNote,
   getAllNotes,
+  getAllNotesByUser,
+  getNotesByCategory,
   getOneNote,
   updateNote,
 } from "../controllers/notes";
@@ -15,22 +17,25 @@ const router = Router();
 // Middleware
 router.use(verifyToken);
 
-//Add new note
+// Add new note
 router.post("/", createNote);
 
-//Get all notes
+// Get all notes
 router.get("/", getAllNotes);
 
-// Get all notes created by a specific user
-// router.get("/getAll/:id", getAllNotesByUser);
+// Get all notes added by a specific user
+router.get("/:id", getAllNotesByUser);
 
-//Get by ID
+// Get all notes that are connected to a specific category
+router.get("/category/:id", getNotesByCategory);
+
+// Get by ID
 router.get("/:id", getOneNote);
 
-//Update by ID
+// Update by ID
 router.put("/:id", updateNote);
 
-//Delete by ID
+// Delete by ID
 router.delete("/:id", deleteNote);
 
 export default router;

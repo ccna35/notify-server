@@ -4,7 +4,7 @@ import { UserRequest } from "../util/token";
 import { ResultSetHeader } from "mysql2";
 
 const createNote = (req: UserRequest, res: Response) => {
-  console.log(req.user);
+  console.log(req.body);
 
   const user_id = req.user;
 
@@ -13,24 +13,20 @@ const createNote = (req: UserRequest, res: Response) => {
   const note_details = [[user_id, note_title, note_body, isPinned, category]];
 
   const query =
-    "INSERT INTO notes(user_id, note_title,note_body,isPinned,category) VALUES ?";
+    "INSERT INTO notes(user_id, note_title, note_body, isPinned, category) VALUES ?";
 
   connection.query(query, [note_details], (err, results, fields) => {
     if (err) {
       console.log(err);
       res.status(500).send("Internal Server Error");
     } else {
-      console.log("results", results);
-      res.status(200).send("Note was created successfully");
+      res.status(200).json({ message: "Note was created successfully" });
     }
   });
-
-  return;
 };
 
 const updateNote = (req: Request, res: Response) => {
   const note_id = req.params.id;
-  console.log(note_id);
 
   const { note_title, note_body, isPinned, category } = req.body;
 
@@ -51,32 +47,53 @@ const updateNote = (req: Request, res: Response) => {
   });
 };
 
-const deleteNote = (req: Request, res: Response) => {
+const deleteNote = (req: UserRequest, res: Response) => {
   const note_id = req.params.id;
+  const user_id = req.user;
 
-  const deleteQuery = "DELETE FROM notes WHERE id = ?";
+  console.log(user_id);
 
-  connection.query<ResultSetHeader>(deleteQuery, [note_id], (err, result) => {
+  const deleteQuery = "DELETE FROM notes WHERE id = ? AND user_id = ?";
+
+  connection.query<ResultSetHeader>(
+    deleteQuery,
+    [note_id, user_id],
+    (err, result) => {
+      if (err) {
+        res.status(500).send("Internal Server Error");
+      } else if (result.affectedRows === 0) {
+        res.status(404).json({ message: "Note not found" });
+      } else {
+        res.status(200).json({ message: "Note deleted successfully" });
+      }
+    }
+  );
+};
+
+const getAllNotesByUser = (req: UserRequest, res: Response) => {
+  const user = req.params.id;
+
+  const searchQuery = req.query.search;
+
+  const searchData = [user, searchQuery, searchQuery];
+
+  const query = `SELECT n.id, n.user_id, n.note_title, n.note_body, n.isPinned, c.category_name, n.createdAt FROM notes AS n JOIN categories AS c ON n.category = c.id WHERE n.user_id = ${user} AND (n.note_title LIKE '%${searchQuery}%' OR n.note_body LIKE '%${searchQuery}%') ORDER BY n.createdAt DESC`;
+
+  connection.query(query, (err, results) => {
     if (err) {
+      console.log(err);
+
       res.status(500).send("Internal Server Error");
-    } else if (result.affectedRows === 0) {
-      res.status(404).send("Note not found");
     } else {
-      res.status(200).send("Note deleted successfully");
+      res.status(200).json(results);
     }
   });
 };
 
-const getAllNotes = (req: UserRequest, res: Response) => {
-  const user = req.user;
+const getAllNotes = (req: Request, res: Response) => {
+  const query = "SELECT * FROM `notes`";
 
-  console.log(user);
-
-  const user_id = [[user]];
-
-  const query = "SELECT * FROM `notes` WHERE user_id = ?";
-
-  connection.query(query, [user_id], (err, results) => {
+  connection.query(query, (err, results) => {
     if (err) {
       res.status(500).send("Internal Server Error");
     } else {
@@ -84,6 +101,43 @@ const getAllNotes = (req: UserRequest, res: Response) => {
     }
   });
 };
+
+const getNotesByCategory = (req: UserRequest, res: Response) => {
+  const user_id = req.user;
+
+  const category = req.params.id;
+
+  const query = "SELECT * FROM `notes` WHERE user_id = ? AND category = ?";
+
+  connection.query(query, [user_id, category], (err, results) => {
+    if (err) {
+      console.log(err);
+
+      res.status(500).send("Internal Server Error");
+    } else {
+      res.status(200).json(results);
+    }
+  });
+};
+
+// const getNotesByQuery = (req: UserRequest, res: Response) => {
+//   const user_id = req.user;
+
+//   const searchQuery = req.query.search;
+
+//   const query =
+//     "SELECT * FROM `notes` WHERE user_id = ? AND title LIKE '%?%' OR body LIKE '%?'";
+
+//   connection.query(query, [user_id, searchQuery], (err, results) => {
+//     if (err) {
+//       console.log(err);
+
+//       res.status(500).send("Internal Server Error");
+//     } else {
+//       res.status(200).json(results);
+//     }
+//   });
+// };
 
 const getOneNote = (req: Request, res: Response) => {
   const note_id = req.params.id;
@@ -98,4 +152,12 @@ const getOneNote = (req: Request, res: Response) => {
   });
 };
 
-export { createNote, getAllNotes, updateNote, getOneNote, deleteNote };
+export {
+  createNote,
+  getAllNotes,
+  updateNote,
+  getOneNote,
+  deleteNote,
+  getNotesByCategory,
+  getAllNotesByUser,
+};

@@ -25,7 +25,7 @@ const createCategory = (req: UserRequest, res: Response) => {
       }
 
       if (results.length > 0) {
-        res.status(400).send("This category already exists");
+        res.status(400).json({ message: "This category already exists" });
       } else {
         const query = "INSERT INTO categories(user_id, category_name) VALUES ?";
 
@@ -35,7 +35,9 @@ const createCategory = (req: UserRequest, res: Response) => {
             res.status(500).send("Internal Server Error");
           } else {
             console.log("results", results);
-            res.status(200).send("Category was created successfully");
+            res
+              .status(200)
+              .json({ message: "Category was created successfully" });
           }
         });
       }
@@ -43,79 +45,76 @@ const createCategory = (req: UserRequest, res: Response) => {
   );
 };
 
-// const updateNote = (req, res) => {
-//   const companyId = req.params.id;
-//   const {
-//     company_name,
-//     company_logo,
-//     company_cover_photo,
-//     overview,
-//     industry,
-//     country,
-//     city,
-//     state,
-//     zip_code,
-//     website,
-//     founded_year,
-//     company_size,
-//     contact_email,
-//     contact_phone,
-//     revenue,
-//   } = req.body;
+const updateCategoryName = (req: UserRequest, res: Response) => {
+  console.log("Update controller");
 
-//   const query =
-//     "UPDATE companies SET company_name = ?, company_logo = ?, company_cover_photo = ?, overview = ?, industry = ?, country = ?, city = ?, state = ?, zip_code = ?, website = ?, founded_year = ?, company_size = ?, contact_email = ?, contact_phone = ?, revenue = ? WHERE id = ?";
+  console.log("req.body: ", req.body);
 
-//   const newData = [
-//     company_name,
-//     company_logo,
-//     company_cover_photo,
-//     overview,
-//     industry,
-//     country,
-//     city,
-//     state,
-//     zip_code,
-//     website,
-//     founded_year,
-//     company_size,
-//     contact_email,
-//     contact_phone,
-//     revenue,
-//     companyId,
-//   ];
+  const category_id = req.params.id;
 
-//   connection.query(query, newData, (err, result) => {
-//     if (err) {
-//       console.log(err);
-//       res.status(500).send("Internal Server Error");
-//     } else if (result.affectedRows === 0) {
-//       res.status(404).send("Company not found");
-//     } else {
-//       res.status(200).send("Company updated successfully");
-//     }
-//   });
-// };
+  const { category_name } = req.body;
 
-// const deleteNote = (req, res) => {
-//   const companyId = req.params.id;
+  const user_id = req.user;
 
-//   const query = "DELETE FROM companies WHERE id = ?";
-//   connection.query(query, companyId, (err, result) => {
-//     if (err) {
-//       res.status(500).send("Internal Server Error");
-//     } else if (result.affectedRows === 0) {
-//       res.status(404).send("Company not found");
-//     } else {
-//       res.status(200).send("Company deleted successfully");
-//     }
-//   });
-// };
+  const checkQuery =
+    "SELECT * FROM categories WHERE NOT id = ? AND category_name = ? AND user_id = ?";
+
+  connection.query<ResultSetHeader[]>(
+    checkQuery,
+    [category_id, category_name, user_id],
+    (err, results) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send("Internal Server Error");
+      }
+      if (results.length > 0) {
+        res.status(400).json({ message: "This category already exists" });
+      } else {
+        const query =
+          "UPDATE categories SET category_name = ? WHERE user_id = ? AND id = ?";
+
+        const newData = [category_name, user_id, category_id];
+
+        connection.query<ResultSetHeader>(query, newData, (err, result) => {
+          if (err) {
+            console.log(err);
+            res.status(500).send("Internal Server Error");
+          } else if (result.affectedRows === 0) {
+            res.status(404).json({ message: "Category not found" });
+          } else {
+            res
+              .status(200)
+              .json({ message: "Category was updated successfully" });
+          }
+        });
+      }
+    }
+  );
+};
+
+const deleteCategory = (req: UserRequest, res: Response) => {
+  const category_id = req.params.id;
+  const user_id = req.user;
+
+  const deleteQuery = "DELETE FROM categories WHERE id = ? AND user_id = ?";
+
+  connection.query<ResultSetHeader>(
+    deleteQuery,
+    [category_id, user_id],
+    (err, result) => {
+      if (err) {
+        res.status(500).send("Internal Server Error");
+      } else if (result.affectedRows === 0) {
+        res.status(404).send("Category not found");
+      } else {
+        res.status(200).send("Category deleted successfully");
+      }
+    }
+  );
+};
 
 const getAllCategories = (req: UserRequest, res: Response) => {
   const user = req.user;
-
-  console.log(user);
 
   const user_id = [[user]];
 
@@ -123,6 +122,7 @@ const getAllCategories = (req: UserRequest, res: Response) => {
 
   connection.query(query, [user_id], (err, results) => {
     if (err) {
+      console.log(err);
       res.status(500).send("Internal Server Error");
     } else {
       res.status(200).json(results);
@@ -130,4 +130,4 @@ const getAllCategories = (req: UserRequest, res: Response) => {
   });
 };
 
-export { createCategory, getAllCategories };
+export { createCategory, getAllCategories, updateCategoryName, deleteCategory };
