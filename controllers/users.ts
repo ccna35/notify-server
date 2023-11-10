@@ -71,14 +71,19 @@ const signup = async (req: Request, res: Response) => {
                       sameSite: "none",
                       maxAge: 7 * 24 * 60 * 60 * 1000,
                     });
-                    res
-                      .status(200)
-                      .json({ message: "User signed up successfully" });
+                    res.status(200).json({
+                      message: "User signed up successfully",
+                      user: {
+                        id: insertResult.insertId,
+                        firstName,
+                        lastName,
+                        username,
+                        email,
+                      },
+                    });
                   }
                 }
               );
-
-              // res.status(200).send("User signed up successfully");
             }
           }
         );
@@ -100,6 +105,7 @@ const login = (req: Request, res: Response) => {
       console.log(result);
 
       const user = result[0];
+      const { id, firstName, lastName, username, email, createdAt } = result[0];
       bcrypt.compare(password, user.user_password, async (err, isMatch) => {
         if (err) {
           throw err;
@@ -116,7 +122,7 @@ const login = (req: Request, res: Response) => {
 
           res.status(200).send({
             message: "Login Successful",
-            user: { ...user, user_password: null },
+            user: { id, firstName, lastName, username, email, createdAt },
           });
         } else {
           res.status(401).send("Invalid credentials");
@@ -126,12 +132,10 @@ const login = (req: Request, res: Response) => {
   });
 };
 
-// const logout = (req: Request, res: Response) => {
-//   console.log("Logout router");
-
-//   res.clearCookie("jwt");
-//   res.status(200).send("User logged out successfully");
-// };
+const logout = (req: Request, res: Response) => {
+  res.clearCookie("jwt");
+  res.status(200).json({ message: "User logged out successfully" });
+};
 
 const updateUser = (req: Request, res: Response) => {
   const userId = req.params.id;
@@ -186,4 +190,4 @@ const getOneUser = (req: Request, res: Response) => {
   });
 };
 
-export { login, signup, updateUser, getAllUsers, getOneUser };
+export { login, signup, logout, updateUser, getAllUsers, getOneUser };

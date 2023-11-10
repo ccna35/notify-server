@@ -3,6 +3,7 @@ import {
   getAllUsers,
   getOneUser,
   login,
+  logout,
   signup,
   updateUser,
 } from "../controllers/users";
@@ -17,12 +18,7 @@ router.post("/signup", signup);
 router.post("/login", login);
 
 // Logout
-router.get("/logout", (req: Request, res: Response) => {
-  console.log("Logout router");
-
-  res.clearCookie("jwt");
-  res.status(200).send("User logged out successfully");
-});
+router.get("/logout", logout);
 
 // Middleware
 router.use(verifyToken);

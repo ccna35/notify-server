@@ -73,9 +73,21 @@ const deleteNote = (req: UserRequest, res: Response) => {
 const getAllNotesByUser = (req: UserRequest, res: Response) => {
   const user = req.params.id;
 
-  const searchQuery = req.query.search;
+  console.log(req.query);
 
-  const query = `SELECT n.id, n.user_id, n.note_title, n.note_body, n.isPinned, c.category_name, n.createdAt FROM notes AS n JOIN categories AS c ON n.category = c.id WHERE n.user_id = ${user} AND (n.note_title LIKE '%${searchQuery}%' OR n.note_body LIKE '%${searchQuery}%') ORDER BY n.createdAt DESC`;
+  const { search, isPinned, category } = req.query;
+
+  console.log(typeof isPinned);
+
+  const query = `SELECT n.id, n.user_id, n.note_title, n.note_body, n.isPinned, c.category_name, n.createdAt FROM notes AS n JOIN categories AS c ON n.category = c.id WHERE n.user_id = ${user} AND (n.note_title LIKE '%${search}%' OR n.note_body LIKE '%${search}%') ${
+    isPinned !== "all" ? "AND n.isPinned = " + isPinned : ""
+  } ${
+    !["0", ""].includes(category as string)
+      ? "AND n.category = " + category
+      : ""
+  } ORDER BY n.createdAt DESC`;
+
+  // AND n.isPinned = ${isPinned}
 
   connection.query(query, (err, results) => {
     if (err) {

@@ -103,11 +103,11 @@ const deleteCategory = (req: UserRequest, res: Response) => {
     [category_id, user_id],
     (err, result) => {
       if (err) {
-        res.status(500).send("Internal Server Error");
+        res.status(500).json({ message: err });
       } else if (result.affectedRows === 0) {
-        res.status(404).send("Category not found");
+        res.status(404).json({ message: "Category not found" });
       } else {
-        res.status(200).send("Category deleted successfully");
+        res.status(200).json({ message: "Category deleted successfully" });
       }
     }
   );
