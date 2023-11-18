@@ -25,24 +25,25 @@ const createNote = (req: UserRequest, res: Response) => {
   });
 };
 
-const updateNote = (req: Request, res: Response) => {
+const updateNote = (req: UserRequest, res: Response) => {
   const note_id = req.params.id;
+  const user_id = req.user;
 
   const { note_title, note_body, isPinned, category } = req.body;
 
   const query =
-    "UPDATE notes SET note_title = ?, note_body = ?, isPinned = ?, category = ? WHERE id = ?";
+    "UPDATE notes SET note_title = ?, note_body = ?, isPinned = ?, category = ? WHERE user_id = ? AND id = ?";
 
-  const newData = [note_title, note_body, isPinned, category, note_id];
+  const newData = [note_title, note_body, isPinned, category, user_id, note_id];
 
   connection.query<ResultSetHeader>(query, newData, (err, result) => {
     if (err) {
       console.log(err);
-      res.status(500).send("Internal Server Error");
+      res.status(500).json({ message: "Internal Server Error" });
     } else if (result.affectedRows === 0) {
-      res.status(404).send("Note not found");
+      res.status(404).json({ message: "Note not found" });
     } else {
-      res.status(200).send("Note updated successfully");
+      res.status(200).json({ message: "Note updated successfully" });
     }
   });
 };
@@ -73,15 +74,9 @@ const deleteNote = (req: UserRequest, res: Response) => {
 const getAllNotesByUser = (req: UserRequest, res: Response) => {
   const user = req.params.id;
 
-  console.log(req.query);
-
   const { search, isPinned, category } = req.query;
 
-  console.log(typeof isPinned);
-
   const query = `SELECT n.id, n.user_id, n.note_title, n.note_body, n.isPinned, c.category_name, n.createdAt FROM notes AS n JOIN categories AS c ON n.category = c.id WHERE n.user_id = ${user} AND (n.note_title LIKE '%${search}%' OR n.note_body LIKE '%${search}%') ${
-    isPinned !== "all" ? "AND n.isPinned = " + isPinned : ""
-  } ${
     !["0", ""].includes(category as string)
       ? "AND n.category = " + category
       : ""
@@ -152,9 +147,13 @@ const getNotesByCategory = (req: UserRequest, res: Response) => {
 const getOneNote = (req: Request, res: Response) => {
   const note_id = req.params.id;
 
+  console.log(req.params);
+
   const query = "SELECT * FROM `notes` WHERE id = ?";
   connection.query(query, [note_id], (err, results) => {
     if (err) {
+      console.log(err);
+
       res.status(500).send("Internal Server Error");
     } else {
       res.status(200).json(results);

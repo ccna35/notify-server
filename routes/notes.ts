@@ -30,7 +30,7 @@ router.get("/:id", getAllNotesByUser);
 router.get("/category/:id", getNotesByCategory);
 
 // Get by ID
-router.get("/:id", getOneNote);
+router.get("/single/:id", getOneNote);
 
 // Update by ID
 router.put("/:id", updateNote);

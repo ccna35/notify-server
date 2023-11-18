@@ -111,7 +111,7 @@ const login = (req: Request, res: Response) => {
           throw err;
         }
         if (isMatch) {
-          const token = await generateToken(user.id);
+          const token = await generateToken(id);
 
           res.cookie("jwt", token, {
             httpOnly: true,
@@ -134,6 +134,7 @@ const login = (req: Request, res: Response) => {
 
 const logout = (req: Request, res: Response) => {
   res.clearCookie("jwt");
+
   res.status(200).json({ message: "User logged out successfully" });
 };
 
